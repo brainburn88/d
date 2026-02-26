@@ -5,38 +5,44 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone
 
-
+# ─────────────────────────────────────────
+#  SETTINGS
+# ─────────────────────────────────────────
 TOKEN = os.environ.get("DISCORD_TOKEN", "")
 
-
+# Custom status (shown under nickname)
 CUSTOM_STATUS_TEXT = os.environ.get("STATUS_TEXT", "still here, somehow")
 
-
+# RPC — shown as "Playing in..."
 RPC_APP_NAME    = os.environ.get("RPC_APP_NAME",  "3am thoughts")
 RPC_DETAILS     = os.environ.get("RPC_DETAILS",   "nothing's wrong")
-RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either")
+RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either — {elapsed}")
 
+# Icon — set these after uploading an image to your Discord Application assets
+# Go to discord.com/developers → your app → Rich Presence → Art Assets → upload image
+# Then put the asset name (e.g. "moon") into RPC_LARGE_IMAGE
+RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "")   # asset name from Discord Dev Portal
+RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "")   # tooltip on hover (optional)
+RPC_SMALL_IMAGE = os.environ.get("RPC_SMALL_IMAGE", "")   # small corner icon (optional)
 
-RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "depression")
-RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "pretty quiet...")
-RPC_SMALL_IMAGE = os.environ.get("RPC_SMALL_IMAGE", "")
-
-
+# Discord Application ID (needed for icons to show)
+# Create app at discord.com/developers/applications → copy Application ID
 APP_ID          = os.environ.get("APP_ID", "")
 
-
+# Button in RPC — links to your status page
 STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel.app/")
 
-
+# Online status: "online" / "idle" / "dnd" / "invisible"
 ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
 
-
+# Timezone offset from UTC (3 = Moscow MSK)
 TIMEZONE_OFFSET = int(os.environ.get("TZ_OFFSET", "3"))
 # ─────────────────────────────────────────
 
 start_time = datetime.now(timezone.utc)
 
 def get_elapsed() -> str:
+    """Сколько времени прошло с запуска"""
     delta = datetime.now(timezone.utc) - start_time
     hours, remainder = divmod(int(delta.total_seconds()), 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -48,6 +54,7 @@ def get_elapsed() -> str:
         return f"{seconds}с"
 
 def get_time() -> str:
+    """Текущее время в нужном часовом поясе"""
     from datetime import timedelta
     tz = timezone(timedelta(hours=TIMEZONE_OFFSET))
     return datetime.now(tz).strftime("%H:%M")
@@ -86,10 +93,10 @@ class SelfBot(discord.Client):
             state=rpc_state,
             details=rpc_details,
             timestamps={"start": int(start_time.timestamp() * 1000)},
-            application_id=int(APP_ID) if APP_ID else None,
             buttons=[{"label": "моё состояние", "url": STATUS_PAGE_URL}] if STATUS_PAGE_URL else [],
         )
 
+        # Add icons if configured
         if RPC_LARGE_IMAGE:
             activity_kwargs["large_image"] = RPC_LARGE_IMAGE
         if RPC_LARGE_TEXT:
@@ -118,6 +125,7 @@ class SelfBot(discord.Client):
         print(f"🔄 [{current_time}] Статус обновлён — онлайн {elapsed}")
 
 
+# Tiny HTTP server so Render Web Service stays happy (free tier)
 class _Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
