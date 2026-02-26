@@ -1,0 +1,29 @@
+services:
+  - type: worker
+    name: discord-rpc-24-7
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: APP_ID
+        sync: false
+      - key: STATUS_TEXT
+        value: "still here, somehow"
+      - key: RPC_APP_NAME
+        value: "3am thoughts"
+      - key: RPC_DETAILS
+        value: "nothing's wrong"
+      - key: RPC_STATE
+        value: "nothing's right either — {elapsed}"
+      - key: RPC_LARGE_IMAGE
+        value: ""
+      - key: RPC_LARGE_TEXT
+        value: ""
+      - key: RPC_SMALL_IMAGE
+        value: ""
+      - key: ONLINE_STATUS
+        value: "online"
+      - key: TZ_OFFSET
+        value: "3"
