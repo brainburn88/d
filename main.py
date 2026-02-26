@@ -20,7 +20,7 @@ RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "pretty quiet...")
 RPC_SMALL_IMAGE = os.environ.get("RPC_SMALL_IMAGE", "")
 
 
-APP_ID          = os.environ.get("APP_ID", "1474445160644345968")
+APP_ID          = os.environ.get("APP_ID", "")
 
 
 STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel.app/")
