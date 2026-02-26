@@ -1,6 +1,8 @@
 import discord
 import asyncio
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone
 
 
@@ -30,11 +32,12 @@ ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
 
 
 TIMEZONE_OFFSET = int(os.environ.get("TZ_OFFSET", "3"))
-
+# ─────────────────────────────────────────
 
 start_time = datetime.now(timezone.utc)
 
 def get_elapsed() -> str:
+    """Сколько времени прошло с запуска"""
     delta = datetime.now(timezone.utc) - start_time
     hours, remainder = divmod(int(delta.total_seconds()), 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -116,6 +119,19 @@ class SelfBot(discord.Client):
         )
         print(f"🔄 [{current_time}] Статус обновлён — онлайн {elapsed}")
 
+
+class _Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"ok")
+    def log_message(self, *args): pass
+
+def _start_http():
+    port = int(os.environ.get("PORT", 10000))
+    HTTPServer(("0.0.0.0", port), _Handler).serve_forever()
+
+threading.Thread(target=_start_http, daemon=True).start()
 
 client = SelfBot()
 
