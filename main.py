@@ -3,146 +3,107 @@ import asyncio
 import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # ─────────────────────────────────────────
 #  SETTINGS
 # ─────────────────────────────────────────
-TOKEN = os.environ.get("DISCORD_TOKEN", "")
-
-# Custom status (shown under nickname)
-CUSTOM_STATUS_TEXT = os.environ.get("STATUS_TEXT", "still here, somehow")
-
-# RPC — shown as "Playing in..."
+TOKEN           = os.environ.get("DISCORD_TOKEN", "")
+CUSTOM_STATUS   = os.environ.get("STATUS_TEXT",   "still here, somehow")
 RPC_APP_NAME    = os.environ.get("RPC_APP_NAME",  "3am thoughts")
 RPC_DETAILS     = os.environ.get("RPC_DETAILS",   "nothing's wrong")
 RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either — {elapsed}")
-
-# Icon — set these after uploading an image to your Discord Application assets
-# Go to discord.com/developers → your app → Rich Presence → Art Assets → upload image
-# Then put the asset name (e.g. "moon") into RPC_LARGE_IMAGE
-RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "")   # asset name from Discord Dev Portal
-RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "")   # tooltip on hover (optional)
-RPC_SMALL_IMAGE = os.environ.get("RPC_SMALL_IMAGE", "")   # small corner icon (optional)
-
-# Discord Application ID (needed for icons to show)
-# Create app at discord.com/developers/applications → copy Application ID
-APP_ID          = os.environ.get("APP_ID", "")
-
-# Button in RPC — links to your status page
+RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "")
+RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "")
 STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel.app/")
-
-# Online status: "online" / "idle" / "dnd" / "invisible"
 ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
-
-# Timezone offset from UTC (3 = Moscow MSK)
-TIMEZONE_OFFSET = int(os.environ.get("TZ_OFFSET", "3"))
+TZ_OFFSET       = int(os.environ.get("TZ_OFFSET", "3"))
 # ─────────────────────────────────────────
+
+if not TOKEN:
+    print("❌ DISCORD_TOKEN not set!")
+    exit(1)
 
 start_time = datetime.now(timezone.utc)
 
-def get_elapsed() -> str:
-    """Сколько времени прошло с запуска"""
+def get_elapsed():
     delta = datetime.now(timezone.utc) - start_time
-    hours, remainder = divmod(int(delta.total_seconds()), 3600)
-    minutes, seconds = divmod(remainder, 60)
-    if hours > 0:
-        return f"{hours}ч {minutes}м"
-    elif minutes > 0:
-        return f"{minutes}м {seconds}с"
-    else:
-        return f"{seconds}с"
+    h, rem = divmod(int(delta.total_seconds()), 3600)
+    m, s   = divmod(rem, 60)
+    if h > 0:   return f"{h}h {m}m"
+    if m > 0:   return f"{m}m {s}s"
+    return f"{s}s"
 
-def get_time() -> str:
-    """Текущее время в нужном часовом поясе"""
-    from datetime import timedelta
-    tz = timezone(timedelta(hours=TIMEZONE_OFFSET))
+def get_time():
+    tz = timezone(timedelta(hours=TZ_OFFSET))
     return datetime.now(tz).strftime("%H:%M")
 
-
-class SelfBot(discord.Client):
-    def __init__(self):
-        super().__init__(self_bot=True)
-        self._update_task = None
-
-    async def on_ready(self):
-        print(f"✅ Залогинился как {self.user} (id: {self.user.id})")
-        print(f"🕐 Старт: {start_time.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        self._update_task = self.loop.create_task(self.update_loop())
-
-    async def update_loop(self):
-        """Обновляем статус каждые 60 секунд"""
-        while True:
-            try:
-                await self.update_presence()
-            except Exception as e:
-                print(f"⚠️  Ошибка обновления статуса: {e}")
-            await asyncio.sleep(60)
-
-    async def update_presence(self):
-        current_time = get_time()
-        elapsed = get_elapsed()
-
-        custom_text = CUSTOM_STATUS_TEXT.format(time=current_time, elapsed=elapsed)
-        rpc_state   = RPC_STATE.format(time=current_time, elapsed=elapsed)
-        rpc_details = RPC_DETAILS.format(time=current_time, elapsed=elapsed)
-
-        activity_kwargs = dict(
-            type=discord.ActivityType.playing,
-            name=RPC_APP_NAME.format(time=current_time, elapsed=elapsed),
-            state=rpc_state,
-            details=rpc_details,
-            timestamps={"start": int(start_time.timestamp() * 1000)},
-            buttons=[{"label": "моё состояние", "url": STATUS_PAGE_URL}] if STATUS_PAGE_URL else [],
-        )
-
-        # Add icons if configured
-        if RPC_LARGE_IMAGE:
-            activity_kwargs["large_image"] = RPC_LARGE_IMAGE
-        if RPC_LARGE_TEXT:
-            activity_kwargs["large_text"] = RPC_LARGE_TEXT
-        if RPC_SMALL_IMAGE:
-            activity_kwargs["small_image"] = RPC_SMALL_IMAGE
-
-        activity = discord.Activity(**activity_kwargs)
-
-        custom_activity = discord.CustomActivity(
-            name=custom_text,
-        )
-
-        status_map = {
-            "online":    discord.Status.online,
-            "idle":      discord.Status.idle,
-            "dnd":       discord.Status.dnd,
-            "invisible": discord.Status.invisible,
-        }
-        status = status_map.get(ONLINE_STATUS, discord.Status.online)
-
-        await self.change_presence(
-            status=status,
-            activities=[custom_activity, activity],
-        )
-        print(f"🔄 [{current_time}] Статус обновлён — онлайн {elapsed}")
-
-
-# Tiny HTTP server so Render Web Service stays happy (free tier)
-class _Handler(BaseHTTPRequestHandler):
+# ── tiny HTTP server so Render doesn't kill us ──
+class _H(BaseHTTPRequestHandler):
     def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"ok")
-    def log_message(self, *args): pass
+        self.send_response(200); self.end_headers(); self.wfile.write(b"ok")
+    def log_message(self, *a): pass
 
-def _start_http():
-    port = int(os.environ.get("PORT", 10000))
-    HTTPServer(("0.0.0.0", port), _Handler).serve_forever()
+def _http():
+    HTTPServer(("0.0.0.0", int(os.environ.get("PORT", 10000))), _H).serve_forever()
 
-threading.Thread(target=_start_http, daemon=True).start()
+threading.Thread(target=_http, daemon=True).start()
+print("🌐 HTTP server started")
 
-client = SelfBot()
+# ── Discord client ──
+client = discord.Client()
 
-if not TOKEN:
-    print("❌ DISCORD_TOKEN не задан! Укажи его в переменных окружения Render.")
-    exit(1)
+@client.event
+async def on_connect():
+    print("🔗 Connected to gateway")
+
+@client.event
+async def on_ready():
+    print(f"✅ Logged in as {client.user}")
+    asyncio.ensure_future(update_loop())
+
+@client.event
+async def on_error(event, *args, **kwargs):
+    import traceback
+    print(f"❌ Error in {event}:")
+    traceback.print_exc()
+
+async def update_loop():
+    while True:
+        try:
+            await set_presence()
+        except Exception as e:
+            print(f"⚠️  Presence error: {e}")
+        await asyncio.sleep(60)
+
+async def set_presence():
+    t       = get_time()
+    elapsed = get_elapsed()
+
+    status_map = {
+        "online": discord.Status.online,
+        "idle":   discord.Status.idle,
+        "dnd":    discord.Status.dnd,
+    }
+    status = status_map.get(ONLINE_STATUS, discord.Status.online)
+
+    kwargs = dict(
+        type    = discord.ActivityType.playing,
+        name    = RPC_APP_NAME.format(time=t, elapsed=elapsed),
+        details = RPC_DETAILS.format(time=t, elapsed=elapsed),
+        state   = RPC_STATE.format(time=t, elapsed=elapsed),
+        timestamps = {"start": int(start_time.timestamp() * 1000)},
+        buttons = [{"label": "моё состояние", "url": STATUS_PAGE_URL}],
+    )
+    if RPC_LARGE_IMAGE: kwargs["large_image"] = RPC_LARGE_IMAGE
+    if RPC_LARGE_TEXT:  kwargs["large_text"]  = RPC_LARGE_TEXT
+
+    activity       = discord.Activity(**kwargs)
+    custom_activity = discord.CustomActivity(
+        name=CUSTOM_STATUS.format(time=t, elapsed=elapsed)
+    )
+
+    await client.change_presence(status=status, activities=[custom_activity, activity])
+    print(f"🔄 [{t} MSK] Status updated — online {elapsed}")
 
 client.run(TOKEN)
