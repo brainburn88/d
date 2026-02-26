@@ -7,16 +7,16 @@ import traceback
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone, timedelta
 
-
+# force unbuffered output
 sys.stdout.reconfigure(line_buffering=True)
 
 TOKEN           = os.environ.get("DISCORD_TOKEN", "")
 CUSTOM_STATUS   = os.environ.get("STATUS_TEXT",   "still here, somehow")
-RPC_APP_NAME    = os.environ.get("RPC_APP_NAME",  "nothing in particular")
+RPC_APP_NAME    = os.environ.get("RPC_APP_NAME",  "3am thoughts")
 RPC_DETAILS     = os.environ.get("RPC_DETAILS",   "nothing's wrong")
-RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either")
-RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "depression")
-RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "pretty quiet...")
+RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either — {elapsed}")
+RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "")
+RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "")
 STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel.app/")
 ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
 TZ_OFFSET       = int(os.environ.get("TZ_OFFSET", "3"))
@@ -41,7 +41,7 @@ def get_time():
     tz = timezone(timedelta(hours=TZ_OFFSET))
     return datetime.now(tz).strftime("%H:%M")
 
-
+# tiny HTTP server for Render free tier
 class _H(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200); self.end_headers(); self.wfile.write(b"ok")
