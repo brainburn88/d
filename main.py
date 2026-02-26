@@ -145,4 +145,4 @@ if not TOKEN:
     print("❌ DISCORD_TOKEN не задан! Укажи его в переменных окружения Render.")
     exit(1)
 
-client.run(TOKEN, bot=False)
+client.run(TOKEN)
