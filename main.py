@@ -14,11 +14,16 @@ CUSTOM_STATUS   = os.environ.get("STATUS_TEXT",   "still here, somehow")
 RPC_APP_NAME    = os.environ.get("RPC_APP_NAME",  "nothing in particular")
 RPC_DETAILS     = os.environ.get("RPC_DETAILS",   "nothing's wrong")
 RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either")
-RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "https://i.imgur.com/rhV4awT.jpeg")
+RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "depression")
 RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "pretty quiet...")
 STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel.app/")
 ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
 TZ_OFFSET       = int(os.environ.get("TZ_OFFSET", "3"))
+
+# === ВАЖНО ===
+# Задаем Application ID. Без него Discord игнорирует расширенный статус!
+# Можно использовать этот ID (публичный тестовый) или создать свой в Discord Developer Portal
+APP_ID          = int(os.environ.get("APPLICATION_ID", "1474445160644345968"))
 
 print(f"🚀 Starting... TOKEN set: {'yes' if TOKEN else 'NO!'}", flush=True)
 
@@ -87,29 +92,32 @@ class MyClient(discord.Client):
         }
         status = status_map.get(ONLINE_STATUS, discord.Status.online)
 
-        # assets через словарь — единственный способ в discord.py-self
         assets = {}
         if RPC_LARGE_IMAGE: assets["large_image"] = RPC_LARGE_IMAGE
         if RPC_LARGE_TEXT:  assets["large_text"]  = RPC_LARGE_TEXT
 
         kwargs = dict(
-            type       = discord.ActivityType.playing,
-            name       = RPC_APP_NAME.format(time=t, elapsed=elapsed),
-            details    = RPC_DETAILS.format(time=t, elapsed=elapsed),
-            state      = RPC_STATE.format(time=t, elapsed=elapsed),
-            timestamps = {"start": int(start_time.timestamp() * 1000)},
+            type           = discord.ActivityType.playing,
+            name           = RPC_APP_NAME.format(time=t, elapsed=elapsed),
+            details        = RPC_DETAILS.format(time=t, elapsed=elapsed),
+            state          = RPC_STATE.format(time=t, elapsed=elapsed),
+            timestamps     = {"start": int(start_time.timestamp() * 1000)},
+            application_id = APP_ID  # <- Ключевой параметр для работы RPC
         )
-        if assets: kwargs["assets"] = assets
+        
+        if assets: 
+            kwargs["assets"] = assets
+            
+        if STATUS_PAGE_URL:
+            # Кнопки передаем сразу в kwargs конструктора
+            kwargs["buttons"] = [{"label": "my status", "url": STATUS_PAGE_URL}]
 
         activity = discord.Activity(**kwargs)
-        try:
-            activity.buttons = [{"label": "my status", "url": STATUS_PAGE_URL}]
-        except Exception:
-            pass
 
         custom_activity = discord.CustomActivity(
             name=CUSTOM_STATUS.format(time=t, elapsed=elapsed)
         )
+        
         await self.change_presence(status=status, activities=[custom_activity, activity])
         print(f"🔄 [{t} MSK] Status updated — uptime {elapsed}", flush=True)
 
