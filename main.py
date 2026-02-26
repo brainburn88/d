@@ -37,7 +37,6 @@ TIMEZONE_OFFSET = int(os.environ.get("TZ_OFFSET", "3"))
 start_time = datetime.now(timezone.utc)
 
 def get_elapsed() -> str:
-    """Сколько времени прошло с запуска"""
     delta = datetime.now(timezone.utc) - start_time
     hours, remainder = divmod(int(delta.total_seconds()), 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -49,7 +48,6 @@ def get_elapsed() -> str:
         return f"{seconds}с"
 
 def get_time() -> str:
-    """Текущее время в нужном часовом поясе"""
     from datetime import timedelta
     tz = timezone(timedelta(hours=TIMEZONE_OFFSET))
     return datetime.now(tz).strftime("%H:%M")
