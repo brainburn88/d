@@ -67,6 +67,7 @@ class MyClient(discord.Client):
         print("⚡ disconnected", flush=True)
 
     async def update_loop(self):
+        await self.wait_until_ready()
         print("▶️  update_loop running", flush=True)
         while True:
             try:
