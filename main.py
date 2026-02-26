@@ -101,7 +101,7 @@ class MyClient(discord.Client):
 
         activity        = discord.Activity(**kwargs)
         try:
-            activity.buttons = [{"label": "моё состояние", "url": STATUS_PAGE_URL}]
+            activity.buttons = [{"label": "my status", "url": STATUS_PAGE_URL}]
         except Exception:
             pass
         custom_activity = discord.CustomActivity(
