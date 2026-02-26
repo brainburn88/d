@@ -12,15 +12,15 @@ CUSTOM_STATUS_TEXT = os.environ.get("STATUS_TEXT", "still here, somehow")
 
 RPC_APP_NAME    = os.environ.get("RPC_APP_NAME",  "3am thoughts")
 RPC_DETAILS     = os.environ.get("RPC_DETAILS",   "nothing's wrong")
-RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either — {elapsed}")
+RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either")
 
 
-RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "")
-RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "")
+RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "Depression")
+RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "pretty quiet...")
 RPC_SMALL_IMAGE = os.environ.get("RPC_SMALL_IMAGE", "")
 
 
-APP_ID          = os.environ.get("APP_ID", "")
+APP_ID          = os.environ.get("APP_ID", "1474445160644345968")
 
 
 STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel.app/")
