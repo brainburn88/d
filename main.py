@@ -15,7 +15,7 @@ RPC_DETAILS     = os.environ.get("RPC_DETAILS",   "nothing's wrong")
 RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either")
 
 
-RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "Depression")
+RPC_LARGE_IMAGE = os.environ.get("RPC_LARGE_IMAGE", "depression")
 RPC_LARGE_TEXT  = os.environ.get("RPC_LARGE_TEXT",  "pretty quiet...")
 RPC_SMALL_IMAGE = os.environ.get("RPC_SMALL_IMAGE", "")
 
