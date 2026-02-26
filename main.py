@@ -7,7 +7,6 @@ import traceback
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone, timedelta
 
-# force unbuffered output
 sys.stdout.reconfigure(line_buffering=True)
 
 TOKEN           = os.environ.get("DISCORD_TOKEN", "")
@@ -24,7 +23,7 @@ TZ_OFFSET       = int(os.environ.get("TZ_OFFSET", "3"))
 print(f"🚀 Starting... TOKEN set: {'yes' if TOKEN else 'NO!'}", flush=True)
 
 if not TOKEN:
-    print("❌ DISCORD_TOKEN not set! Exiting.", flush=True)
+    print("❌ DISCORD_TOKEN not set!", flush=True)
     exit(1)
 
 start_time = datetime.now(timezone.utc)
@@ -41,7 +40,6 @@ def get_time():
     tz = timezone(timedelta(hours=TZ_OFFSET))
     return datetime.now(tz).strftime("%H:%M")
 
-# tiny HTTP server for Render free tier
 class _H(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200); self.end_headers(); self.wfile.write(b"ok")
@@ -69,7 +67,6 @@ class MyClient(discord.Client):
         print("⚡ disconnected", flush=True)
 
     async def update_loop(self):
-        await asyncio.sleep(5)
         print("▶️  update_loop running", flush=True)
         while True:
             try:
@@ -88,22 +85,27 @@ class MyClient(discord.Client):
             "dnd":    discord.Status.dnd,
         }
         status = status_map.get(ONLINE_STATUS, discord.Status.online)
+
+        # assets через словарь — единственный способ в discord.py-self
+        assets = {}
+        if RPC_LARGE_IMAGE: assets["large_image"] = RPC_LARGE_IMAGE
+        if RPC_LARGE_TEXT:  assets["large_text"]  = RPC_LARGE_TEXT
+
         kwargs = dict(
             type       = discord.ActivityType.playing,
             name       = RPC_APP_NAME.format(time=t, elapsed=elapsed),
             details    = RPC_DETAILS.format(time=t, elapsed=elapsed),
             state      = RPC_STATE.format(time=t, elapsed=elapsed),
             timestamps = {"start": int(start_time.timestamp() * 1000)},
-
         )
-        if RPC_LARGE_IMAGE: kwargs["large_image"] = RPC_LARGE_IMAGE
-        if RPC_LARGE_TEXT:  kwargs["large_text"]  = RPC_LARGE_TEXT
+        if assets: kwargs["assets"] = assets
 
-        activity        = discord.Activity(**kwargs)
+        activity = discord.Activity(**kwargs)
         try:
             activity.buttons = [{"label": "my status", "url": STATUS_PAGE_URL}]
         except Exception:
             pass
+
         custom_activity = discord.CustomActivity(
             name=CUSTOM_STATUS.format(time=t, elapsed=elapsed)
         )
