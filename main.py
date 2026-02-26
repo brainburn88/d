@@ -23,10 +23,14 @@ RPC_SMALL_IMAGE = os.environ.get("RPC_SMALL_IMAGE", "")
 APP_ID          = os.environ.get("APP_ID", "")
 
 
+STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel.app/")
+
+
 ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
 
+
 TIMEZONE_OFFSET = int(os.environ.get("TZ_OFFSET", "3"))
-# ─────────────────────────────────────────
+
 
 start_time = datetime.now(timezone.utc)
 
@@ -82,6 +86,7 @@ class SelfBot(discord.Client):
             details=rpc_details,
             timestamps={"start": int(start_time.timestamp() * 1000)},
             application_id=int(APP_ID) if APP_ID else None,
+            buttons=[{"label": "моё состояние", "url": STATUS_PAGE_URL}] if STATUS_PAGE_URL else [],
         )
 
         if RPC_LARGE_IMAGE:
