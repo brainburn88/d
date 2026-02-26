@@ -12,7 +12,7 @@ services:
       - key: STATUS_TEXT
         value: "still here, somehow"
       - key: RPC_APP_NAME
-        value: "3am thoughts"
+        value: "nothing in particular"
       - key: RPC_DETAILS
         value: "nothing's wrong"
       - key: RPC_STATE
