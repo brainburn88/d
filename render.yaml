@@ -18,9 +18,9 @@ services:
       - key: RPC_STATE
         value: "nothing's right either"
       - key: RPC_LARGE_IMAGE
-        value: ""
+        value: "Depression"
       - key: RPC_LARGE_TEXT
-        value: ""
+        value: "pretty quiet..."
       - key: RPC_SMALL_IMAGE
         value: ""
       - key: STATUS_PAGE_URL
