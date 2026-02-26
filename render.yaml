@@ -6,9 +6,9 @@ services:
     startCommand: python main.py
     envVars:
       - key: DISCORD_TOKEN
-        sync: false
+        sync: false 
       - key: APP_ID
-        sync: false
+        sync: false 
       - key: STATUS_TEXT
         value: "still here, somehow"
       - key: RPC_APP_NAME
@@ -16,13 +16,15 @@ services:
       - key: RPC_DETAILS
         value: "nothing's wrong"
       - key: RPC_STATE
-        value: "nothing's right either — {elapsed}"
+        value: "nothing's right either"
       - key: RPC_LARGE_IMAGE
         value: ""
       - key: RPC_LARGE_TEXT
         value: ""
       - key: RPC_SMALL_IMAGE
         value: ""
+      - key: STATUS_PAGE_URL
+        value: "https://why-chi-rust.vercel.app/"
       - key: ONLINE_STATUS
         value: "online"
       - key: TZ_OFFSET
