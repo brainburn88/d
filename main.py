@@ -1,9 +1,14 @@
+import sys
 import discord
 import asyncio
 import os
 import threading
+import traceback
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone, timedelta
+
+# force unbuffered output
+sys.stdout.reconfigure(line_buffering=True)
 
 TOKEN           = os.environ.get("DISCORD_TOKEN", "")
 CUSTOM_STATUS   = os.environ.get("STATUS_TEXT",   "still here, somehow")
@@ -16,8 +21,10 @@ STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel
 ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
 TZ_OFFSET       = int(os.environ.get("TZ_OFFSET", "3"))
 
+print(f"🚀 Starting... TOKEN set: {'yes' if TOKEN else 'NO!'}", flush=True)
+
 if not TOKEN:
-    print("❌ DISCORD_TOKEN not set!")
+    print("❌ DISCORD_TOKEN not set! Exiting.", flush=True)
     exit(1)
 
 start_time = datetime.now(timezone.utc)
@@ -40,32 +47,36 @@ class _H(BaseHTTPRequestHandler):
         self.send_response(200); self.end_headers(); self.wfile.write(b"ok")
     def log_message(self, *a): pass
 
+port = int(os.environ.get("PORT", 10000))
 threading.Thread(
-    target=lambda: HTTPServer(("0.0.0.0", int(os.environ.get("PORT", 10000))), _H).serve_forever(),
+    target=lambda: HTTPServer(("0.0.0.0", port), _H).serve_forever(),
     daemon=True
 ).start()
-print("🌐 HTTP server started")
+print(f"🌐 HTTP server started on port {port}", flush=True)
 
 class MyClient(discord.Client):
     async def setup_hook(self):
-        print("🔧 setup_hook called — starting update loop")
+        print("🔧 setup_hook fired", flush=True)
         self.loop.create_task(self.update_loop())
 
     async def on_ready(self):
-        print(f"✅ on_ready — logged in as {self.user}")
+        print(f"✅ on_ready — {self.user}", flush=True)
 
     async def on_connect(self):
-        print("🔗 on_connect fired")
+        print("🔗 on_connect fired", flush=True)
+
+    async def on_disconnect(self):
+        print("⚡ disconnected", flush=True)
 
     async def update_loop(self):
-        # wait a bit for connection to stabilize
         await asyncio.sleep(5)
-        print("▶️  update_loop started")
+        print("▶️  update_loop running", flush=True)
         while True:
             try:
                 await self.set_presence()
             except Exception as e:
-                print(f"⚠️  Presence error: {e}")
+                print(f"⚠️  Presence error: {e}", flush=True)
+                traceback.print_exc()
             await asyncio.sleep(60)
 
     async def set_presence(self):
@@ -77,14 +88,13 @@ class MyClient(discord.Client):
             "dnd":    discord.Status.dnd,
         }
         status = status_map.get(ONLINE_STATUS, discord.Status.online)
-
         kwargs = dict(
             type       = discord.ActivityType.playing,
             name       = RPC_APP_NAME.format(time=t, elapsed=elapsed),
             details    = RPC_DETAILS.format(time=t, elapsed=elapsed),
             state      = RPC_STATE.format(time=t, elapsed=elapsed),
             timestamps = {"start": int(start_time.timestamp() * 1000)},
-            buttons    = [{"label": "моё состояние", "url": STATUS_PAGE_URL}],
+
         )
         if RPC_LARGE_IMAGE: kwargs["large_image"] = RPC_LARGE_IMAGE
         if RPC_LARGE_TEXT:  kwargs["large_text"]  = RPC_LARGE_TEXT
@@ -94,7 +104,12 @@ class MyClient(discord.Client):
             name=CUSTOM_STATUS.format(time=t, elapsed=elapsed)
         )
         await self.change_presence(status=status, activities=[custom_activity, activity])
-        print(f"🔄 [{t} MSK] Status updated — uptime {elapsed}")
+        print(f"🔄 [{t} MSK] Status updated — uptime {elapsed}", flush=True)
 
-client = MyClient()
-client.run(TOKEN)
+try:
+    print("🔌 Connecting to Discord...", flush=True)
+    client = MyClient()
+    client.run(TOKEN)
+except Exception as e:
+    print(f"💥 Fatal error: {e}", flush=True)
+    traceback.print_exc()
