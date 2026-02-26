@@ -62,7 +62,7 @@ def get_time() -> str:
 
 class SelfBot(discord.Client):
     def __init__(self):
-        super().__init__()
+        super().__init__(self_bot=True)
         self._update_task = None
 
     async def on_ready(self):
@@ -145,4 +145,4 @@ if not TOKEN:
     print("❌ DISCORD_TOKEN не задан! Укажи его в переменных окружения Render.")
     exit(1)
 
-client.run(TOKEN)
+client.run(TOKEN, bot=False)
