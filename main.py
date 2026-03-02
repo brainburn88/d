@@ -10,7 +10,6 @@ from datetime import datetime, timezone, timedelta
 sys.stdout.reconfigure(line_buffering=True)
 
 TOKEN           = os.environ.get("DISCORD_TOKEN", "")
-CUSTOM_STATUS   = os.environ.get("STATUS_TEXT",   "still here, somehow")
 RPC_APP_NAME    = os.environ.get("RPC_APP_NAME",  "nothing in particular")
 RPC_DETAILS     = os.environ.get("RPC_DETAILS",   "nothing's wrong")
 RPC_STATE       = os.environ.get("RPC_STATE",     "nothing's right either")
@@ -20,9 +19,7 @@ STATUS_PAGE_URL = os.environ.get("STATUS_PAGE_URL", "https://why-chi-rust.vercel
 ONLINE_STATUS   = os.environ.get("ONLINE_STATUS", "online")
 TZ_OFFSET       = int(os.environ.get("TZ_OFFSET", "3"))
 
-# === ВАЖНО ===
-# Задаем Application ID. Без него Discord игнорирует расширенный статус!
-# Можно использовать этот ID (публичный тестовый) или создать свой в Discord Developer Portal
+
 APP_ID          = int(os.environ.get("APPLICATION_ID", "1474445160644345968"))
 
 print(f"🚀 Starting... TOKEN set: {'yes' if TOKEN else 'NO!'}", flush=True)
